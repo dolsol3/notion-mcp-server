@@ -9,16 +9,17 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies (BuildKit 캐시 사용)
-RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts --omit-dev
+# Install dependencies
+# RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts --omit-dev
+RUN npm ci --ignore-scripts --omit-dev
 
 # Copy source code
 COPY . .
 
-# Build the package (BuildKit 캐시 사용)
+# Build the package
 RUN --mount=type=cache,target=/root/.npm npm run build
 
-# Install package globally (BuildKit 캐시 사용)
+# Install package globally
 RUN --mount=type=cache,target=/root/.npm npm link
 
 # Minimal image for runtime
