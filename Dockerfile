@@ -32,8 +32,5 @@ COPY --from=builder /usr/local/bin/notion-mcp-server /usr/local/bin/notion-mcp-s
 # Set default environment variables
 ENV OPENAPI_MCP_HEADERS="{}"
 
-# Cloud Run이 요구하는 포트(8080) 노출
-EXPOSE 8080
-
 # Set entrypoint
 ENTRYPOINT ["notion-mcp-server"]
