@@ -1,25 +1,27 @@
-# --- Dockerfile 수정 ---
+# --- 싱글 스테이지 Dockerfile 예시 ---
+    FROM node:20-slim
 
-# 최종 실행 단계 (두 번째 FROM)
-FROM node:20-slim
-WORKDIR /app
-
-# ---> 이 부분을 추가하세요 <---
-# 빌더(builder) 스테이지의 /app 폴더에서 package.json과 package-lock.json을 복사합니다.
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/package-lock.json ./ 
-# npm ci를 사용했으므로 lock 파일도 중요합니다.
-
-# 기존 복사 명령들 (빌드 결과 및 node_modules)
-COPY --from=builder /app/build ./build
-COPY --from=builder /app/node_modules ./node_modules
-# 참고: 아래 두 줄(전역 설치 복사)은 위에서 node_modules를 제대로 복사했다면 필요 없을 수 있습니다.
-# COPY --from=builder /usr/local/lib/node_modules/@notionhq/notion-mcp-server ./node_modules/@notionhq/notion-mcp-server
-# COPY --from=builder /usr/local/bin/notion-mcp-server /usr/local/bin/notion-mcp-server
-
-# 나머지 ENV, EXPOSE, ENTRYPOINT 등
-ENV CLOUD_RUN_PORT=8080 
-EXPOSE 8080
-ENTRYPOINT ["npm", "start"]
-
-# --- 수정 끝 ---
+    # 작업 디렉토리 설정
+    WORKDIR /app
+    
+    # 의존성 설치 먼저 (변경이 잦지 않으므로 캐시 활용에 유리)
+    COPY package*.json ./
+    RUN npm ci --ignore-scripts --omit=dev
+    
+    # 전체 소스 코드 복사
+    COPY . .
+    
+    # 빌드 실행 (TypeScript 컴파일 등, package.json에 정의된 스크립트)
+    RUN npm run build
+    
+    # 환경 변수 (Cloud Run 표준 PORT 사용 권장)
+    # ENV PORT=8080 # Cloud Run이 자동으로 설정해주므로 굳이 안 써도 됨
+    EXPOSE 8080 
+    
+    # 시작 명령어 (둘 중 하나 선택)
+    # 옵션 1: npm start 스크립트 사용 (package.json에 "start"가 정의되어 있어야 함)
+    ENTRYPOINT ["npm", "start"]
+    # 옵션 2: 빌드된 메인 JS 파일 직접 실행 (예: build/index.js 가 메인 파일일 경우)
+    # CMD ["node", "build/index.js"]
+    
+    # --- 예시 끝 ---
